@@ -17,6 +17,13 @@ SUITS = list(SUIT_MAP.values())
 # 定義所有可能的撲克牌號碼 (Ranks)
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 
+# 新增：號碼值對應字典，用於比較大小 (J=11, Q=12, K=13, A=14)
+# 這樣才能判斷猜測的號碼是更大還是更小
+RANK_VALUES = {
+    '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+    'J': 11, 'Q': 12, 'K': 13, 'A': 14
+}
+
 # 設定每局遊戲的最大猜測次數
 MAX_ATTEMPTS = 5 # 變更為 5 次
 
@@ -83,6 +90,9 @@ def get_combined_guess():
         except ValueError as e:
             print(f"🚫 輸入錯誤: {e}")
             # 傳回 (None, None) 讓 while 迴圈繼續
+            # 注意：原程式碼中這裡有 return (None, None) 應該改為 continue 讓 while 迴圈繼續，
+            # 但由於原程式碼在外層已有 while 迴圈，因此這裡保留原結構。
+            # 但為了健壯性，我們在外部 play_round 進行了處理。
             return (None, None)
         except Exception as e:
             print(f"⚠️ 發生未知錯誤: {e}")
@@ -100,6 +110,9 @@ def play_round():
     # 1. 程式隨機產生一張撲克牌
     correct_suit, correct_rank = generate_card()
     
+    # 新增：獲取正確號碼的數值，用於大小比較
+    correct_value = RANK_VALUES[correct_rank]
+    
     # 初始化剩餘猜測次數
     attempts_left = MAX_ATTEMPTS
     
@@ -110,6 +123,7 @@ def play_round():
         guessed_suit, guessed_rank = (None, None)
         
         # 確保使用者輸入是有效的花色代碼和號碼
+        # 這裡會重複呼叫 get_combined_guess 直到輸入有效或退出
         while guessed_suit is None and guessed_rank is None:
             guessed_suit, guessed_rank = get_combined_guess()
             
@@ -117,6 +131,10 @@ def play_round():
             if guessed_suit == EXIT_CODE:
                 print("\n🔔 您已選擇中途退出本局遊戲。")
                 return -1 
+        
+        # 獲取猜測號碼的數值，用於大小比較
+        # 由於 get_combined_guess 已驗證 guessed_rank 在 RANKS 中，這裡取值安全
+        guessed_value = RANK_VALUES[guessed_rank]
 
         # 3. 判斷並顯示結果
         print("\n--- 本次猜測結果 ---")
@@ -132,13 +150,18 @@ def play_round():
             attempts_left -= 1
             print("😢 **很可惜，這次沒有完全猜對。**")
             
-            # --- 即時提示功能保留 ---
+            # --- 即時提示功能修改 ---
             suit_match = (guessed_suit == correct_suit)
             rank_match = (guessed_rank == correct_rank)
 
             if suit_match:
-                print("✨ **提示：您猜對了花色！** (但號碼錯了)")
+                # 花色猜對，但號碼錯了，提供新的大小提示
+                if guessed_value > correct_value:
+                    print("✨ **提示：您猜對了花色！** 數字太大了，請猜更小的號碼！")
+                else: # guessed_value < correct_value
+                    print("✨ **提示：您猜對了花色！** 數字太小了，請猜更大的號碼！")
             elif rank_match:
+                # 號碼猜對，但花色錯了 (保留原有提示)
                 print("✨ **提示：您猜對了號碼！** (但花色錯了)")
             # --------------------------
                 
