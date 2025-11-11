@@ -9,7 +9,10 @@ SUIT_MAP = {
     'H': '紅心 (Hearts)',
     'S': '黑桃 (Spades)'
 }
-SUIT_CHOICES = list(SUIT_MAP.keys())
+# 僅用於顯示給使用者的花色列表 (簡稱)
+SUIT_CHOICES = list(SUIT_MAP.keys()) 
+# 僅用於內部比對的完整花色列表
+SUITS = list(SUIT_MAP.values())
 
 # 定義所有可能的撲克牌號碼 (Ranks)
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
